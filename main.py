@@ -11,98 +11,53 @@ import calendar
 from NS_wrapper_v1 import *
 
 
+def main_():
+    
+    # Create the argument parser
+    parser = argparse.ArgumentParser()
 
-# Create the argument parser
-parser = argparse.ArgumentParser()
+    # Add the arguments with shortcuts
+    parser.add_argument("-ns", "--data", help="your csv data path from NS website", required=True)
+    parser.add_argument("-d", "--distances", help="distances csv informations", required=False)
+    parser.add_argument("-s", "--stations", help="stations codes csv", required=False)
 
-# Add the arguments with shortcuts
-parser.add_argument("-ns", "--data", help="your csv data path from NS website", required=True)
-parser.add_argument("-d", "--distances", help="distances csv informations", required=False)
-parser.add_argument("-s", "--stations", help="stations codes csv", required=False)
+    # Parse the command-line arguments
+    args = parser.parse_args()
 
-# Parse the command-line arguments
-args = parser.parse_args()
-
-# Access the values of the arguments
-path_df = args.data
-path_distances_csv = args.distances
-path_stations_codes = args.stations
-
-
-
-df = pd.read_csv(path_df)
-df = df.drop(['Bij', 'Transactie', 'Kl', 'Prive/ Zakelijk', 'Opmerking'], axis=1)
+    # Access the values of the arguments
+    path_df = args.data
+    path_distances_csv = args.distances
+    path_stations_codes = args.stations
 
 
-print("Please choose something you want to know about your travel informations: \n")
-print("1. view expenses informations")
-print("2. view km traveled informations")
-print("3. view time spent informations")
-print("q to Quit")
 
-user_input = input()
-
-while True:
-
-    if user_input == '1':
-        const_sub = input("add amount of money you pay per month for your subscription : ")
-        except_months = input("add number of months where you didn't pay for your subscription (0 if you paid every months) : ")
-        print("Your overall expense : \n")
-        train_overall, metro_overall, total_overall, months_active = get_price_overall(df)
-        sub = float(const_sub) * (months_active - float(except_months))
-
-        print(f"You spent {train_overall}€ in trains, {metro_overall}€ in metro/bus/tram. {round(sub, 2)}€ in subscriptions {round(total_overall+sub, 2)}€ in total", "\n")
-        print('\n')
-        a, b, c = get_price_by_month(df)
-        d, e, f = price_day_of_week(df)
-        print("--------------")
-        print("1. view expenses informations")
-        print("2. view km traveled informations")
-        print("3. view time spent informations")
-        print("q to Quit")
-        user_input = input()
-
-    if  user_input == '2':
-        print("Your overall distance traveled : \n")
-        df_train = get_distances_df(df)
-        total_overall, months, day_of_week = get_distances(df_train)
-
-        print(f"{total_overall} km")
-        print('--------------')
-        print('\n')
-        print(most_traveled_trips(df))
-        print("--------------")
-        print("1. view expenses informations")
-        print("2. view km traveled informations")
-        print("3. view time spent informations")
-        print("q to Quit")
-        user_input = input()
+    df = pd.read_csv(path_df)
+    df = df.drop(['Bij', 'Transactie', 'Kl', 'Prive/ Zakelijk', 'Opmerking'], axis=1)
 
 
-    if user_input == '3':
-        print("Your overall time spent : \n")
-        train_overall, metro_overall, total_overall = get_times(df)
-        print(f"You spent {train_overall} minutes in trains, {metro_overall} minutes in metro/bus/tram. {total_overall} minutes in total", "\n")
-        print("--------------")
-        a,b,c = get_time_by_month(df)
-        d,e,f = time_day_of_week(df)
-        print("1. view expenses informations")
-        print("2. view km traveled informations")
-        print("3. view time spent informations")
-        print("q to Quit")
-        user_input = input()
 
-    if user_input.lower() == 'q':
-        sys.exit(0)
+   # const_sub = input("add amount of money you pay per month for your subscription : ")
+   # except_months = input("add number of months where you didn't pay for your subscription (0 if you paid every months) : ")
 
-    else:
-        print("wrong input")
-        print("Please choose something you want to know about your travel informations: \n")
-        print("1. view expenses informations")
-        print("2. view km traveled informations")
-        print("3. view time spent informations")
-        print("q to Quit \n")
-        user_input = input()
+    pay1, pay2, pay3, months_active = get_price_overall(df)
+    #sub = float(const_sub) * (months_active - float(except_months))
 
+    month1, month2, month3, plot1 = get_price_by_month(df)
+    day1, day2, day3, plot2 = price_day_of_week(df)
+
+
+    df_train = get_distances_df(df)
+    distance1, distance2, distance3, plot3 = get_distances(df_train)
+
+    
+    most_trips = most_traveled_trips(df)
+    
+
+    time1, time2, time3 = get_times(df)
+    
+    time2_1, time2_2, time2_3, plot4 = get_time_by_month(df)
+    time3_1, time3_2, time3_3, plot5 = time_day_of_week(df)
+
+    return [plot1, plot2, plot3, plot4, plot5, most_trips, pay1, pay2, pay3, distance1, distance2, distance3, time1, time2, time3, time2_1, time2_2, time2_3, time3_1, time3_2, time3_3, month1, month2, month3, day1, day2, day3]
 
 

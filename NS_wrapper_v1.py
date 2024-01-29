@@ -6,9 +6,8 @@ import os
 import sys
 import requests
 
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from plotly.offline import plot
+from plotly.subplots import make_subplots
 
 import calendar
 
@@ -161,7 +160,8 @@ def plot1(list_series, title=''):
         l.append(fig)
     return l
 
-def plot2(list_series, name='plot_default'):
+
+def plot3(list_series, name='plot_default'):
     l = []
     for df in list_series:
         fig = go.Bar(x=df.index, y=df.values, name=df.name)
@@ -175,8 +175,35 @@ def plot2(list_series, name='plot_default'):
 
     fig_sub.update_layout(title_text=name)
 
-    plot(fig_sub, filename=name)
+    #plot(fig_sub, filename=name)
 
+    return fig_sub
+
+
+
+def plot2(plots, name='plot_default'):
+    # Calculate the number of rows and columns based on the number of plots
+    n_plots = len(plots)
+    n_rows = int(n_plots ** 0.5)
+    n_cols = (n_plots + n_rows - 1) // n_rows
+
+    # Create a Plotly subplot with the calculated number of rows and columns
+    fig = make_subplots(rows=n_rows, cols=n_cols)
+
+    for i, plot in enumerate(plots, start=1):
+        row = (i - 1) // n_cols + 1
+        col = (i - 1) % n_cols + 1
+        
+        
+        if isinstance(plot, go.Figure):
+            for trace in plot.data:
+                fig.add_trace(trace, row=row, col=col)
+        else:
+            fig.add_trace(plot, row=row, col=col)
+
+    fig.update_layout(title_text=name)
+
+    return fig
 
 def get_indices_train_metro(df): #build function
 
@@ -244,9 +271,9 @@ def get_time_by_month(df, plot=True): #must check
     time_months_metro = time_months_metro.rename('time spent in metro/bus/tram')
     
     if plot:
-        plot2([time_months_overall, time_months_train, time_months_metro], name='time_by_month.html')
+        a = plot2([time_months_overall, time_months_train, time_months_metro], name='time_by_month.html')
 
-    return time_months_overall, time_months_train, time_months_metro
+    return time_months_overall, time_months_train, time_months_metro, a
 
 def time_day_of_week(df, plot=True):
     df = clean_data(df)
@@ -282,9 +309,9 @@ def time_day_of_week(df, plot=True):
     time_total = time_total.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
     time_total = time_total.rename('total time spent')
     if plot:
-        plot2([time_total, time_train, time_metro], name='time_by_day_of_week.html')
+        a = plot2([time_total, time_train, time_metro], name='time_by_day_of_week.html')
 
-    return time_total, time_train, time_metro
+    return time_total, time_train, time_metro, a
 
 ### END TIME SPENT PART
 
@@ -343,9 +370,9 @@ def get_price_by_month(df, plot=True):
 
     if plot:
         
-        plot2([price_months_overall, price_months_train, price_months_metro], name='price_by_month.html')
+        a = plot2([price_months_overall, price_months_train, price_months_metro], name='price_by_month.html')
 
-    return price_months_overall, price_months_train, price_months_metro
+    return price_months_overall, price_months_train, price_months_metro, a
 
 def price_day_of_week(df, plot=True):
     df = clean_data(df)
@@ -382,9 +409,9 @@ def price_day_of_week(df, plot=True):
     price_total = price_total.rename('total money spent')
 
     if plot:
-        plot2([price_total, price_train, price_metro], name='price_by_day_of_week.html')
+        a = plot2([price_total, price_train, price_metro], name='price_by_day_of_week.html')
 
-    return price_train, price_metro, price_total
+    return price_train, price_metro, price_total, a
 
 ### END PRICE PART
 
@@ -488,9 +515,9 @@ def get_distances(df, plot=True):
     km_day_of_week = km_day_of_week.rename('total km traveled by day of week')
 
     if plot:
-        plot2([km_by_months, km_day_of_week], name='distances.html')
+        a = plot2([km_by_months, km_day_of_week], name='distances.html')
 
-    return total_distance, km_by_months, km_day_of_week
+    return total_distance, km_by_months, km_day_of_week, a
 
 
 
