@@ -6,10 +6,6 @@ import os
 import sys
 import requests
 
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
-import calendar
 
 
 def get_day_of_week(date_string):
@@ -72,7 +68,6 @@ def download_data():
         distances_name = "distances.csv"
         with open(distances_name, "wb") as file:
             file.write(response_distances.content)
-        df_saved = pd.read_csv(distances_name)
         print("File downloaded and loaded with pandas (saved version):")
 
     else:
@@ -82,7 +77,6 @@ def download_data():
         stations_name = "stations.csv"
         with open(stations_name, "wb") as file:
             file.write(response_stations.content)
-        df_saved = pd.read_csv(stations_name)
         print("File downloaded and loaded with pandas (saved version):")
 
     else:
@@ -109,7 +103,7 @@ def train_or_metro(s):
         return 'others'
     
 
-def clean_data(df): #build function
+def clean_data(df): 
 
     
     df = df[df['Product'] != 'OV Fiets'] #removing ov_fiets for now
@@ -139,7 +133,6 @@ def clean_data(df): #build function
     df['Check uit'] = df.apply(lambda x: time1(x['Datum'], x['Check uit']), axis=1)
 
 
-
     #creating new columns
 
     df['time_diff'] = df.apply(lambda x: time_diff(x['Check in'], x['Check uit']), axis=1)
@@ -153,59 +146,13 @@ def clean_data(df): #build function
 
     return df
 
-def plot1(list_series, title=''):
-    l = []
-    for df in list_series:
-        fig = go.Bar(x=df.index, y=df.values, name=df.name)
-        l.append(fig)
-    return l
-
-
-def plot3(list_series, name='plot_default'):
-    l = []
-    for df in list_series:
-        fig = go.Bar(x=df.index, y=df.values, name=df.name)
-        l.append(fig)
-    
-    fig_sub = make_subplots(rows=int(np.sqrt(len(l)))+1, cols=int(np.sqrt(len(l))+1),
-                        subplot_titles=[figu['name'] for figu in l])
-
-    for i, figu in enumerate(l):
-        fig_sub.add_trace(figu, row=(i//2)+1, col=(i%2)+1)
-
-    fig_sub.update_layout(title_text=name)
-
-    #plot(fig_sub, filename=name)
-
-    return fig_sub
 
 
 
-def plot2(plots, name='plot_default'):
-    # Calculate the number of rows and columns based on the number of plots
-    n_plots = len(plots)
-    n_rows = int(n_plots ** 0.5)
-    n_cols = (n_plots + n_rows - 1) // n_rows
 
-    # Create a Plotly subplot with the calculated number of rows and columns
-    fig = make_subplots(rows=n_rows, cols=n_cols)
 
-    for i, plot in enumerate(plots, start=1):
-        row = (i - 1) // n_cols + 1
-        col = (i - 1) % n_cols + 1
-        
-        
-        if isinstance(plot, go.Figure):
-            for trace in plot.data:
-                fig.add_trace(trace, row=row, col=col)
-        else:
-            fig.add_trace(plot, row=row, col=col)
 
-    fig.update_layout(title_text=name)
-
-    return fig
-
-def get_indices_train_metro(df): #build function
+def get_indices_train_metro(df): 
 
     train = np.array(df[df['transport_type'] == 'train'].index)
     metro = np.array(df[df['transport_type'] == 'metro'].index)
@@ -237,7 +184,7 @@ def get_times(df):
     return round(time_in_train, 2), round(time_in_metro, 2), round(total_time, 2)
 
 
-def get_time_by_month(df, plot=True): #must check 
+def get_time_by_month(df): #must check 
     df = clean_data(df)
     df = df.reset_index()
 
@@ -250,7 +197,7 @@ def get_time_by_month(df, plot=True): #must check
             time_months_overall.loc[i] = 0
     time_months_overall = time_months_overall.sort_index()
     time_months_overall = time_months_overall.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    time_months_overall = time_months_overall.rename('total time spent')
+    time_months_overall = time_months_overall.rename('total time spent monthly')
 
     time_months_train = df.iloc[train, :].groupby('month')['time_diff'].sum() #pandas series
     for i in range(1,13):
@@ -259,7 +206,7 @@ def get_time_by_month(df, plot=True): #must check
 
     time_months_train = time_months_train.sort_index()
     time_months_train = time_months_train.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    time_months_train = time_months_train.rename('time spent in train')
+    time_months_train = time_months_train.rename('time spent in train monthly')
 
     time_months_metro = df.iloc[metro, :].groupby('month')['time_diff'].sum() #pandas series
     for i in range(1,13):
@@ -268,14 +215,12 @@ def get_time_by_month(df, plot=True): #must check
     
     time_months_metro = time_months_metro.sort_index()
     time_months_metro = time_months_metro.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    time_months_metro = time_months_metro.rename('time spent in metro/bus/tram')
+    time_months_metro = time_months_metro.rename('time spent in metro/bus/tram monthly')
     
-    if plot:
-        a = plot2([time_months_overall, time_months_train, time_months_metro], name='time_by_month.html')
 
-    return time_months_overall, time_months_train, time_months_metro, a
+    return time_months_overall, time_months_train, time_months_metro
 
-def time_day_of_week(df, plot=True):
+def time_day_of_week(df):
     df = clean_data(df)
     df = df.reset_index()
 
@@ -291,7 +236,7 @@ def time_day_of_week(df, plot=True):
 
     time_train = time_train.sort_index()
     time_train = time_train.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    time_train = time_train.rename('time spent in train')
+    time_train = time_train.rename('time spent in train weekly')
 
     for i in range(7):
         if i not in time_metro.index:
@@ -300,18 +245,16 @@ def time_day_of_week(df, plot=True):
     time_metro = time_metro.sort_index()
 
     time_metro = time_metro.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    time_metro = time_metro.rename('time spent in metro/bus/tram')
+    time_metro = time_metro.rename('time spent in metro/bus/tram weekly')
     
     for i in range(7):
         if i not in time_total.index:
             time_total.loc[i] = 0
     time_total = time_total.sort_index()
     time_total = time_total.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    time_total = time_total.rename('total time spent')
-    if plot:
-        a = plot2([time_total, time_train, time_metro], name='time_by_day_of_week.html')
+    time_total = time_total.rename('total time spent weekly')
 
-    return time_total, time_train, time_metro, a
+    return time_total, time_train, time_metro
 
 ### END TIME SPENT PART
 
@@ -333,7 +276,7 @@ def get_price_overall(df):
 
     return round(expenses_train, 2), round(expenses_metro, 2), round(expense_total, 2), months_active
 
-def get_price_by_month(df, plot=True):
+def get_price_by_month(df):
 
     df = clean_data(df)
     df = df.reset_index()
@@ -347,7 +290,7 @@ def get_price_by_month(df, plot=True):
             price_months_overall.loc[i] = 0
     price_months_overall = price_months_overall.sort_index()
     price_months_overall = price_months_overall.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    price_months_overall = price_months_overall.rename('total money spent')
+    price_months_overall = price_months_overall.rename('total money spent monthly')
 
     price_months_train = df.iloc[train, :].groupby('month')['Af'].sum() #pandas series
     for i in range(1,13):
@@ -356,7 +299,7 @@ def get_price_by_month(df, plot=True):
 
     price_months_train = price_months_train.sort_index()
     price_months_train = price_months_train.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    price_months_train = price_months_train.rename('money spent in train')
+    price_months_train = price_months_train.rename('money spent in train monthly')
 
     price_months_metro = df.iloc[metro, :].groupby('month')['Af'].sum() #pandas series
     for i in range(1,13):
@@ -365,16 +308,12 @@ def get_price_by_month(df, plot=True):
     
     price_months_metro = price_months_metro.sort_index()
     price_months_metro = price_months_metro.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    price_months_metro = price_months_metro.rename('money spent in metro/bus/tram')
+    price_months_metro = price_months_metro.rename('money spent in metro/bus/tram monthly')
 
 
-    if plot:
-        
-        a = plot2([price_months_overall, price_months_train, price_months_metro], name='price_by_month.html')
+    return price_months_overall, price_months_train, price_months_metro
 
-    return price_months_overall, price_months_train, price_months_metro, a
-
-def price_day_of_week(df, plot=True):
+def price_day_of_week(df):
     df = clean_data(df)
     df = df.reset_index()
 
@@ -390,7 +329,7 @@ def price_day_of_week(df, plot=True):
     
     price_train = price_train.sort_index()
     price_train = price_train.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    price_train = price_train.rename('money spent in train')
+    price_train = price_train.rename('money spent in train weekly')
 
     for i in range(7):
         if i not in price_metro.index:
@@ -398,7 +337,7 @@ def price_day_of_week(df, plot=True):
 
     price_metro = price_metro.sort_index()
     price_metro = price_metro.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    price_metro = price_metro.rename('money spent in metro/bus/tram')
+    price_metro = price_metro.rename('money spent in metro/bus/tram weekly')
 
     for i in range(7):
         if i not in price_total.index:
@@ -406,12 +345,9 @@ def price_day_of_week(df, plot=True):
     
     price_total = price_total.sort_index()
     price_total = price_total.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    price_total = price_total.rename('total money spent')
+    price_total = price_total.rename('total money spent weekly')
 
-    if plot:
-        a = plot2([price_total, price_train, price_metro], name='price_by_day_of_week.html')
-
-    return price_train, price_metro, price_total, a
+    return price_train, price_metro, price_total
 
 ### END PRICE PART
 
@@ -419,7 +355,7 @@ def price_day_of_week(df, plot=True):
 
 #DISTANCES PART
 
-def get_distances_df(df, stations_csv="stations.csv", distances_csv='distances.csv', plot=True): #build function
+def get_distances_df(df, stations_csv="stations.csv", distances_csv='distances.csv'):
     df = clean_data(df)
     df = df.reset_index()
 
@@ -447,8 +383,7 @@ def get_distances_df(df, stations_csv="stations.csv", distances_csv='distances.c
     list_stations.loc[list_stations.shape[0]] = ['302', 'LAA', 'Den Haag Laan van NOI'] #this station is name bugged in the csv file
 
     def get_code_station(df_stations, s):
-        #print(df_stations[df_stations['name_long'] == s]['code'].values[0])
-        #print('--------------', '\n')
+
         return df_stations[df_stations['name_long'] == s]['code'].values[0]
 
 
@@ -467,7 +402,6 @@ def get_distances_df(df, stations_csv="stations.csv", distances_csv='distances.c
     df_train_temp = df.iloc[train,:]
     df_train = df_train_temp.copy()
     
-    #trip_df = pd.DataFrame(data =trip , columns=['departure', 'arrival'])
     df_train['departure_code'] = df_train['Vertrek'].apply(lambda x: get_code_station(list_stations, x))
     df_train['arrival_code'] = df_train['Bestemming'].apply(lambda x: get_code_station(list_stations, x))
     
@@ -490,7 +424,7 @@ def get_distances_df(df, stations_csv="stations.csv", distances_csv='distances.c
 
     return df_train
 
-def get_distances(df, plot=True):
+def get_distances(df):
 
     total_distance = df['distances'].sum()
 
@@ -502,7 +436,7 @@ def get_distances(df, plot=True):
     
     km_by_months = km_by_months.sort_index()
     km_by_months = km_by_months.rename(lambda x: datetime.date(1900, x, 1).strftime('%B'))
-    km_by_months = km_by_months.rename('total km traveled by months')
+    km_by_months = km_by_months.rename('total km traveled monthly')
 
     km_day_of_week = df.groupby('day_of_week')['distances'].sum()
 
@@ -512,12 +446,10 @@ def get_distances(df, plot=True):
 
     km_day_of_week = km_day_of_week.sort_index()
     km_day_of_week = km_day_of_week.rename(lambda x: datetime.date(1900, 1, x+1).strftime('%A'))
-    km_day_of_week = km_day_of_week.rename('total km traveled by day of week')
+    km_day_of_week = km_day_of_week.rename('total km traveled weekly')
 
-    if plot:
-        a = plot2([km_by_months, km_day_of_week], name='distances.html')
 
-    return total_distance, km_by_months, km_day_of_week, a
+    return total_distance, km_by_months, km_day_of_week
 
 
 
